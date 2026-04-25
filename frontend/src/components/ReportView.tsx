@@ -1,5 +1,5 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { AlertTriangle, CheckCircle, BrainCircuit, Download, ShieldCheck, Wand2, ShieldAlert, Activity, FileText } from 'lucide-react'
+import { AlertTriangle, CheckCircle, BrainCircuit, Download, ShieldCheck, Wand2, Activity, FileText } from 'lucide-react'
 
 import { useState } from 'react'
 
@@ -267,7 +267,6 @@ export default function ReportView({ data: initialData }: { data: any }) {
 }
 
 function MetricCard({ title, value, threshold, invert = false, trend = "+0.0%" }: any) {
-  const isHealthy = invert ? value >= threshold : value <= threshold
   
   // Create a percentage for the progress bar based on how close it is to ideal (0 or 1 depending on metric)
   let progress = 0;
