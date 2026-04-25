@@ -266,7 +266,7 @@ export default function ReportView({ data: initialData }: { data: any }) {
   )
 }
 
-function MetricCard({ title, value, threshold, invert = false, trend = "+0.0%" }: any) {
+function MetricCard({ title, value, trend = "+0.0%" }: any) {
   
   // Create a percentage for the progress bar based on how close it is to ideal (0 or 1 depending on metric)
   let progress = 0;
