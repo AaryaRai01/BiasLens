@@ -17,7 +17,10 @@ export default function ReportView({ data: initialData }: { data: any }) {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       const response = await fetch(`${apiUrl}/api/mitigate`, { method: 'POST' })
-      if (!response.ok) throw new Error('Mitigation failed')
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Mitigation failed')
+      }
       const resData = await response.json()
       setMitigatedData({
         ...initialData,
@@ -28,9 +31,9 @@ export default function ReportView({ data: initialData }: { data: any }) {
         compliance: resData.compliance,
       })
       setShowMitigated(true)
-    } catch (e) {
+    } catch (e: any) {
       console.error(e)
-      alert("Failed to mitigate bias")
+      alert(`Mitigation Error: ${e.message || 'Check backend logs'}`)
     } finally {
       setIsMitigating(false)
     }

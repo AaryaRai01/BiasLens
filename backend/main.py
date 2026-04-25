@@ -171,79 +171,84 @@ def generate_narrative_report(metrics, group_data, protected_attr):
 
 @app.post("/api/mitigate")
 async def mitigate_bias():
+    print(f"DEBUG: app_state keys: {list(app_state.keys())}")
     if 'df' not in app_state:
-        raise HTTPException(status_code=400, detail="No dataset uploaded yet.")
+        raise HTTPException(status_code=400, detail="Session expired or data lost. Please re-upload your dataset.")
         
-    df = app_state['df'].copy()
-    protected_attr = app_state['protected_attr']
-    pred_col = app_state['pred_col']
-    label_col = app_state['label_col']
-    
-    # Simulate a quick debiasing technique (e.g., Reweighing or threshold adjustment)
-    # For the hackathon demo, we simply adjust the predictions to be fairer by a factor
-    
-    groups = df[protected_attr].unique()
-    if len(groups) >= 2:
-        g1, g2 = groups[0], groups[1]
+    try:
+        df = app_state['df'].copy()
+        protected_attr = app_state['protected_attr']
+        pred_col = app_state['pred_col']
+        label_col = app_state['label_col']
         
-        rate1 = df[df[protected_attr] == g1][pred_col].mean()
-        rate2 = df[df[protected_attr] == g2][pred_col].mean()
+        # Simulate a quick debiasing technique (e.g., Reweighing or threshold adjustment)
+        # For the hackathon demo, we simply adjust the predictions to be fairer by a factor
         
-        # Calculate how much to boost to close 80% of the gap
-        target_boost = abs(rate1 - rate2) * 0.8
-        
-        # Apply the boost to the disadvantaged group
-        # Adding a float value ensures binary predictions actually change their mean
-        df[pred_col] = df[pred_col].astype(float)
-        if rate2 < rate1:
-            df.loc[df[protected_attr] == g2, pred_col] += target_boost
-        else:
-            df.loc[df[protected_attr] == g1, pred_col] += target_boost
+        groups = df[protected_attr].unique()
+        if len(groups) >= 2:
+            g1, g2 = groups[0], groups[1]
             
-        # Cap at 1
-        df[pred_col] = df[pred_col].clip(upper=1)
+            rate1 = df[df[protected_attr] == g1][pred_col].mean()
+            rate2 = df[df[protected_attr] == g2][pred_col].mean()
+            
+            # Calculate how much to boost to close 80% of the gap
+            target_boost = abs(rate1 - rate2) * 0.8
+            
+            # Apply the boost to the disadvantaged group
+            # Adding a float value ensures binary predictions actually change their mean
+            df[pred_col] = df[pred_col].astype(float)
+            if rate2 < rate1:
+                df.loc[df[protected_attr] == g2, pred_col] += target_boost
+            else:
+                df.loc[df[protected_attr] == g1, pred_col] += target_boost
+                
+            # Cap at 1
+            df[pred_col] = df[pred_col].clip(upper=1)
+            
+            rate1 = df[df[protected_attr] == g1][pred_col].mean()
+            rate2 = df[df[protected_attr] == g2][pred_col].mean()
+            dp = round(abs(rate1 - rate2), 3)
+            di = round(rate2 / rate1 if rate1 > 0 else 1.0, 3)
+            
+            # Equal Opportunity (TPR)
+            tpr1 = df[(df[protected_attr] == g1) & (df[label_col] == 1)][pred_col].mean()
+            tpr2 = df[(df[protected_attr] == g2) & (df[label_col] == 1)][pred_col].mean()
+            eo = round(abs(tpr1 - tpr2), 3)
+        else:
+            dp, eo, di = 0.05, 0.02, 0.95 # Perfect fallback
+            
+        metrics = {
+            "demographic_parity": dp,
+            "equal_opportunity": eo,
+            "disparate_impact": di
+        }
         
-        rate1 = df[df[protected_attr] == g1][pred_col].mean()
-        rate2 = df[df[protected_attr] == g2][pred_col].mean()
-        dp = round(abs(rate1 - rate2), 3)
-        di = round(rate2 / rate1 if rate1 > 0 else 1.0, 3)
+        compliance = {
+            "eu_ai_act": "COMPLIANT" if dp < 0.1 else "HIGH RISK",
+            "nyc_law_144": "COMPLIANT" if di >= 0.8 and di <= 1.25 else "FAILING (4/5ths Rule)",
+        }
         
-        # Equal Opportunity (TPR)
-        tpr1 = df[(df[protected_attr] == g1) & (df[label_col] == 1)][pred_col].mean()
-        tpr2 = df[(df[protected_attr] == g2) & (df[label_col] == 1)][pred_col].mean()
-        eo = round(abs(tpr1 - tpr2), 3)
-    else:
-        dp, eo, di = 0.05, 0.02, 0.95 # Perfect fallback
-        
-    metrics = {
-        "demographic_parity": dp,
-        "equal_opportunity": eo,
-        "disparate_impact": di
-    }
-    
-    compliance = {
-        "eu_ai_act": "COMPLIANT" if dp < 0.1 else "HIGH RISK",
-        "nyc_law_144": "COMPLIANT" if di >= 0.8 and di <= 1.25 else "FAILING (4/5ths Rule)",
-    }
-    
-    group_data = []
-    for g in groups[:5]:
-        rate = df[df[protected_attr] == g][pred_col].mean() * 100
-        group_data.append({
-            "name": str(g),
-            "approvalRate": round(rate, 1)
-        })
-        
-    # Store mitigated df
-    app_state['mitigated_df'] = df
+        group_data = []
+        for g in groups[:5]:
+            rate = df[df[protected_attr] == g][pred_col].mean() * 100
+            group_data.append({
+                "name": str(g),
+                "approvalRate": round(rate, 1)
+            })
+            
+        # Store mitigated df
+        app_state['mitigated_df'] = df
 
-    return {
-        "status": "success",
-        "metrics": metrics,
-        "compliance": compliance,
-        "group_data": group_data,
-        "message": "Mitigation applied successfully."
-    }
+        return {
+            "status": "success",
+            "metrics": metrics,
+            "compliance": compliance,
+            "group_data": group_data,
+            "message": "Mitigation applied successfully."
+        }
+    except Exception as e:
+        print(f"ERROR in mitigate_bias: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Mitigation Error: {str(e)}")
 
 @app.get("/api/export-debiased")
 async def export_debiased():
