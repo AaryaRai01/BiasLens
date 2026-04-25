@@ -84,4 +84,4 @@ npm run dev
 - **Custom Thresholding:** Allowing users to manually drag and drop approval thresholds to see real-time impact on Disparate Impact scores.
 
 ---
-*Built with ❤️ for the Solution Challenge 2026*
+*Built for the Solution Challenge 2026*

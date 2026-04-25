@@ -46,7 +46,8 @@ export default function UploadView({ onComplete }: { onComplete: (data: any) => 
     formData.append('file', file)
 
     try {
-      const response = await fetch('http://localhost:8000/api/upload', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/upload`, {
         method: 'POST',
         body: formData,
       })

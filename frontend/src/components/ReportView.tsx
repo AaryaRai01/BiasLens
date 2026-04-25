@@ -15,7 +15,8 @@ export default function ReportView({ data: initialData }: { data: any }) {
   const handleMitigate = async () => {
     setIsMitigating(true)
     try {
-      const response = await fetch('http://localhost:8000/api/mitigate', { method: 'POST' })
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/mitigate`, { method: 'POST' })
       if (!response.ok) throw new Error('Mitigation failed')
       const resData = await response.json()
       setMitigatedData({
@@ -36,7 +37,8 @@ export default function ReportView({ data: initialData }: { data: any }) {
   }
 
   const handleExportDebiased = () => {
-    window.open('http://localhost:8000/api/export-debiased', '_blank')
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    window.open(`${apiUrl}/api/export-debiased`, '_blank')
   }
 
   const COLORS = ['#8b5cf6', '#3b82f6', '#2dd4bf', '#f43f5e', '#eab308']
