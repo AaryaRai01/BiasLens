@@ -1,143 +1,202 @@
-import { Upload, FileType, CheckCircle } from 'lucide-react'
 import { useState, useRef } from 'react'
 
-export default function UploadView({ onComplete }: { onComplete: (data: any) => void }) {
-  const [isUploading, setIsUploading] = useState(false)
+type Props = { onComplete: (data: any) => void }
 
-  const fileInputRef = useRef<HTMLInputElement>(null)
+export default function UploadView({ onComplete }: Props) {
+  const [isDragging, setIsDragging] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [fileName, setFileName] = useState('')
+  const fileRef = useRef<HTMLInputElement>(null)
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const processFile = async (file: File) => {
+    setFileName(file.name)
+    setIsLoading(true)
+    setError('')
+    const formData = new FormData()
+    formData.append('file', file)
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      const res = await fetch(`${apiUrl}/api/upload`, { method: 'POST', body: formData })
+      if (!res.ok) {
+        const errData = await res.json()
+        throw new Error(errData.detail || 'Upload failed')
+      }
+      const data = await res.json()
+      onComplete({
+        filename: data.filename,
+        rows: data.rows,
+        columns: data.columns,
+        protectedAttribute: data.protected_attribute_detected,
+        demographicParity: data.metrics.demographic_parity,
+        equalizedOdds: data.metrics.demographic_parity,
+        equalOpportunity: data.metrics.equal_opportunity,
+        disparateImpact: data.metrics.disparate_impact,
+        compliance: data.compliance,
+        group_data: data.group_data,
+        geminiNarrative: data.narrative,
+      })
+    } catch (e: any) {
+      setError(e.message || 'Failed to process file')
+      setIsLoading(false)
+    }
   }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    e.stopPropagation()
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      uploadFile(file)
-    }
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      uploadFile(file)
-    }
-  }
-
-  const uploadFile = async (file: File) => {
-    const allowedExtensions = ['.csv', '.xlsx', '.xls', '.json']
-    const isAllowed = allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))
-    
-    if (!isAllowed) {
-      alert("Please upload a CSV, Excel, or JSON file")
-      return
-    }
-
-    setIsUploading(true)
-    
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${apiUrl}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (!response.ok) {
-        throw new Error('Upload failed')
-      }
-      
-      const data = await response.json()
-      
-      // Map the backend data to what the frontend expects
-      onComplete({
-        demographicParity: data.metrics.demographic_parity,
-        equalizedOdds: data.metrics.equal_opportunity, // mapping equal_opportunity to equalizedOdds for UI
-        disparateImpact: data.metrics.disparate_impact,
-        equalOpportunity: data.metrics.equal_opportunity,
-        compliance: data.compliance,
-        group_data: data.group_data,
-        geminiNarrative: data.narrative,
-        mitigations: [
-          "Remove proxy features if detected",
-          "Apply instance re-weighting to balance the training set",
-          "Implement adversarial debiasing during model training"
-        ],
-        shapData: [
-          { feature: 'Feature 1', groupA: 0.45, groupB: 0.22 },
-          { feature: 'Feature 2', groupA: 0.38, groupB: 0.15 },
-        ],
-        backendData: data // Pass the raw backend data just in case
-      })
-    } catch (error) {
-      console.error("Error uploading file:", error)
-      alert("Error uploading file. Please ensure the backend is running.")
-    } finally {
-      setIsUploading(false)
-    }
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (file) processFile(file)
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full max-w-2xl mx-auto text-center">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Audit Your Model</h1>
-        <p className="text-slate-400">Upload your model's predictions and dataset to detect hidden biases and receive actionable mitigation strategies.</p>
+    <div style={{ maxWidth: 800, margin: '0 auto', paddingTop: 40 }} className="animate-fadeup">
+      {/* Header */}
+      <div style={{ marginBottom: 32, textAlign: 'center' }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 8,
+          padding: '4px 14px', borderRadius: 999,
+          backgroundColor: 'var(--accent-blue-light)', color: 'var(--accent-blue)',
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
+          marginBottom: 16,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          BiasLens Audit Engine v2.1
+        </div>
+        <h1 style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: 10 }}>
+          Upload Your Dataset
+        </h1>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary)', maxWidth: 480, margin: '0 auto', lineHeight: 1.6 }}>
+          Provide a model prediction dataset with protected attributes. BiasLens calculates fairness metrics and generates a comprehensive audit report.
+        </p>
       </div>
 
-      <div 
-        className="w-full glass-panel p-10 border-dashed border-2 border-slate-600 hover:border-primary/50 transition-colors flex flex-col items-center justify-center gap-4 relative overflow-hidden group"
-        onDragOver={handleDragOver}
+      {/* Drop Zone */}
+      <div
+        onClick={() => fileRef.current?.click()}
+        onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+        onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
+        style={{
+          border: `2px dashed ${isDragging ? 'var(--accent-blue)' : 'var(--border-dark)'}`,
+          borderRadius: 16,
+          backgroundColor: isDragging ? 'var(--accent-blue-light)' : 'white',
+          padding: '48px 32px',
+          textAlign: 'center',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          marginBottom: 24,
+        }}
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        
-        <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-2 shadow-lg shadow-black/20">
-          <Upload className="w-8 h-8 text-primary" />
+        <div style={{
+          width: 60, height: 60, borderRadius: 12,
+          backgroundColor: 'var(--bg-main)',
+          border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 16px',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" strokeWidth="1.5">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
         </div>
-        
-        <h3 className="text-xl font-semibold">Drag & drop your file here</h3>
-        <p className="text-slate-400 text-sm mb-6">Supports CSV, Excel, and JSON formats</p>
-        
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          accept=".csv,.xlsx,.xls,.json" 
-          className="hidden" 
+        {isLoading ? (
+          <div>
+            <div style={{
+              width: 36, height: 36, border: '3px solid var(--border)',
+              borderTop: '3px solid var(--accent-blue)',
+              borderRadius: '50%', margin: '0 auto 12px',
+              animation: 'spin 0.8s linear infinite',
+            }} />
+            <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+              Analysing <span style={{ color: 'var(--accent-blue)' }}>{fileName}</span>
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+              Running fairness algorithms…
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+              Drop dataset file here, or <span style={{ color: 'var(--accent-blue)' }}>browse</span>
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+              Supports CSV, JSON, Excel — max 50MB
+            </p>
+          </div>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".csv,.json,.xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
         />
-        <button 
-          onClick={handleUploadClick}
-          disabled={isUploading}
-          className="relative z-10 bg-primary hover:bg-blue-500 text-white px-8 py-3 rounded-full font-medium transition-all shadow-lg shadow-primary/20 flex items-center gap-2 disabled:opacity-70"
+      </div>
+
+      {error && (
+        <div style={{
+          padding: '12px 16px', borderRadius: 8,
+          backgroundColor: 'var(--accent-red-light)', border: '1px solid #fca5a5',
+          color: 'var(--accent-red)', fontSize: 13, fontWeight: 500, marginBottom: 24,
+        }}>
+          ⚠ {error}
+        </div>
+      )}
+
+      {/* Info cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        {[
+          { title: 'Required Columns', desc: 'prediction, label, and one protected attribute (gender, race, age)', icon: '≡' },
+          { title: 'Supported Formats', desc: 'CSV, JSON, and Excel files with standard tabular structure', icon: '⬡' },
+          { title: 'Privacy Safe', desc: 'All processing done server-side. No raw data is stored or transmitted.', icon: '⬡' },
+        ].map(item => (
+          <div key={item.title} className="panel" style={{ padding: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+              {item.title}
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Sample data button */}
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+          Don't have a dataset? Use our sample data to explore the tool.
+        </p>
+        <button
+          onClick={async () => {
+            const sampleRes = await fetch('/sample_data.json').catch(() => null)
+            if (sampleRes) {
+              const blob = await sampleRes.blob()
+              const file = new File([blob], 'sample_data.json', { type: 'application/json' })
+              processFile(file)
+            } else {
+              // Inline sample fallback
+              const sample = JSON.stringify(
+                Array.from({ length: 200 }, (_, i) => ({
+                  gender: i % 3 === 0 ? 'Female' : 'Male',
+                  age: 25 + (i % 40),
+                  prediction: i % 5 === 0 ? 0 : 1,
+                  label: i % 4 === 0 ? 0 : 1,
+                })),
+                null, 2
+              )
+              const file = new File([sample], 'sample_data.json', { type: 'application/json' })
+              processFile(file)
+            }
+          }}
+          className="btn btn-outline"
+          style={{ fontSize: 12 }}
         >
-          {isUploading ? (
-            <span className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-white/30 border-t-transparent rounded-full animate-spin" />
-              Analyzing Data...
-            </span>
-          ) : (
-            <>
-              <FileType className="w-5 h-5" />
-              Select File
-            </>
-          )}
+          Load Sample Dataset
         </button>
       </div>
-      
-      <div className="mt-12 flex items-center justify-center gap-8 text-sm text-slate-400">
-        <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /> Auto-detects attributes</div>
-        <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /> 4 key fairness metrics</div>
-        <div className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-success" /> AI generated report</div>
-      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   )
 }
