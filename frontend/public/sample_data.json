@@ -1,0 +1,22 @@
+[
+  {"age": 39, "workclass": "State-gov", "education": "Bachelors", "marital_status": "Never-married", "occupation": "Adm-clerical", "race": "White", "gender": "Male", "hours_per_week": 40, "prediction": 1, "label": 0},
+  {"age": 50, "workclass": "Self-emp-not-inc", "education": "Bachelors", "marital_status": "Married-civ-spouse", "occupation": "Exec-managerial", "race": "White", "gender": "Male", "hours_per_week": 13, "prediction": 1, "label": 1},
+  {"age": 38, "workclass": "Private", "education": "HS-grad", "marital_status": "Divorced", "occupation": "Handlers-cleaners", "race": "White", "gender": "Male", "hours_per_week": 40, "prediction": 0, "label": 0},
+  {"age": 53, "workclass": "Private", "education": "11th", "marital_status": "Married-civ-spouse", "occupation": "Handlers-cleaners", "race": "Black", "gender": "Male", "hours_per_week": 40, "prediction": 0, "label": 0},
+  {"age": 28, "workclass": "Private", "education": "Bachelors", "marital_status": "Married-civ-spouse", "occupation": "Prof-specialty", "race": "Black", "gender": "Female", "hours_per_week": 40, "prediction": 0, "label": 1},
+  {"age": 37, "workclass": "Private", "education": "Masters", "marital_status": "Married-civ-spouse", "occupation": "Exec-managerial", "race": "White", "gender": "Female", "hours_per_week": 40, "prediction": 1, "label": 1},
+  {"age": 49, "workclass": "Private", "education": "9th", "marital_status": "Married-spouse-absent", "occupation": "Other-service", "race": "Black", "gender": "Female", "hours_per_week": 16, "prediction": 0, "label": 0},
+  {"age": 52, "workclass": "Self-emp-not-inc", "education": "HS-grad", "marital_status": "Married-civ-spouse", "occupation": "Exec-managerial", "race": "White", "gender": "Male", "hours_per_week": 45, "prediction": 1, "label": 1},
+  {"age": 31, "workclass": "Private", "education": "Masters", "marital_status": "Never-married", "occupation": "Prof-specialty", "race": "White", "gender": "Female", "hours_per_week": 50, "prediction": 1, "label": 1},
+  {"age": 42, "workclass": "Private", "education": "Bachelors", "marital_status": "Married-civ-spouse", "occupation": "Exec-managerial", "race": "White", "gender": "Male", "hours_per_week": 40, "prediction": 1, "label": 1},
+  {"age": 37, "workclass": "Private", "education": "Some-college", "marital_status": "Married-civ-spouse", "occupation": "Exec-managerial", "race": "Black", "gender": "Male", "hours_per_week": 80, "prediction": 1, "label": 1},
+  {"age": 30, "workclass": "State-gov", "education": "Bachelors", "marital_status": "Married-civ-spouse", "occupation": "Prof-specialty", "race": "Asian-Pac-Islander", "gender": "Male", "hours_per_week": 40, "prediction": 1, "label": 1},
+  {"age": 23, "workclass": "Private", "education": "Bachelors", "marital_status": "Never-married", "occupation": "Adm-clerical", "race": "White", "gender": "Female", "hours_per_week": 30, "prediction": 0, "label": 0},
+  {"age": 32, "workclass": "Private", "education": "Assoc-acdm", "marital_status": "Never-married", "occupation": "Sales", "race": "Black", "gender": "Male", "hours_per_week": 50, "prediction": 0, "label": 1},
+  {"age": 40, "workclass": "Private", "education": "Assoc-voc", "marital_status": "Married-civ-spouse", "occupation": "Craft-repair", "race": "Asian-Pac-Islander", "gender": "Male", "hours_per_week": 40, "prediction": 1, "label": 1},
+  {"age": 34, "workclass": "Private", "education": "7th-8th", "marital_status": "Married-civ-spouse", "occupation": "Transport-moving", "race": "Amer-Indian-Eskimo", "gender": "Male", "hours_per_week": 45, "prediction": 0, "label": 0},
+  {"age": 25, "workclass": "Self-emp-not-inc", "education": "HS-grad", "marital_status": "Never-married", "occupation": "Farming-fishing", "race": "White", "gender": "Male", "hours_per_week": 35, "prediction": 0, "label": 0},
+  {"age": 32, "workclass": "Private", "education": "HS-grad", "marital_status": "Never-married", "occupation": "Machine-op-inspct", "race": "White", "gender": "Male", "hours_per_week": 40, "prediction": 0, "label": 0},
+  {"age": 38, "workclass": "Private", "education": "11th", "marital_status": "Married-civ-spouse", "occupation": "Sales", "race": "White", "gender": "Male", "hours_per_week": 50, "prediction": 1, "label": 0},
+  {"age": 43, "workclass": "Self-emp-not-inc", "education": "Masters", "marital_status": "Divorced", "occupation": "Exec-managerial", "race": "White", "gender": "Female", "hours_per_week": 45, "prediction": 1, "label": 1}
+]
