@@ -169,24 +169,31 @@ export default function UploadView({ onComplete }: Props) {
         </p>
         <button
           onClick={async () => {
-            const sampleRes = await fetch('/sample_data.json').catch(() => null)
-            if (sampleRes) {
-              const blob = await sampleRes.blob()
+            try {
+              setIsLoading(true)
+              setError('')
+              setFileName('sample_data.json')
+              
+              const sampleRes = await fetch('/sample_data.json')
+              if (sampleRes.ok) {
+                const blob = await sampleRes.blob()
+                const file = new File([blob], 'sample_data.json', { type: 'application/json' })
+                await processFile(file)
+              } else {
+                throw new Error('Could not fetch sample file')
+              }
+            } catch (e) {
+              // Inline sample fallback if fetch fails
+              const sampleData = Array.from({ length: 100 }, (_, i) => ({
+                gender: i % 3 === 0 ? 'Female' : 'Male',
+                race: i % 4 === 0 ? 'Black' : 'White',
+                age: 25 + (i % 40),
+                prediction: i % 5 === 0 ? 0 : 1,
+                label: i % 4 === 0 ? 0 : 1,
+              }))
+              const blob = new Blob([JSON.stringify(sampleData, null, 2)], { type: 'application/json' })
               const file = new File([blob], 'sample_data.json', { type: 'application/json' })
-              processFile(file)
-            } else {
-              // Inline sample fallback
-              const sample = JSON.stringify(
-                Array.from({ length: 200 }, (_, i) => ({
-                  gender: i % 3 === 0 ? 'Female' : 'Male',
-                  age: 25 + (i % 40),
-                  prediction: i % 5 === 0 ? 0 : 1,
-                  label: i % 4 === 0 ? 0 : 1,
-                })),
-                null, 2
-              )
-              const file = new File([sample], 'sample_data.json', { type: 'application/json' })
-              processFile(file)
+              await processFile(file)
             }
           }}
           className="btn btn-outline"
