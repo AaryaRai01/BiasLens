@@ -6,11 +6,14 @@ import ExecutiveOverview from './components/ExecutiveOverview'
 import PersonaStories from './components/PersonaStories'
 import MitigationSandbox from './components/MitigationSandbox'
 import DetailedAudit from './components/DetailedAudit'
+import LoginPage from './components/LoginPage'
+import { useAuth } from './AuthContext'
 import './index.css'
 
 export type View = 'upload' | 'executive' | 'persona' | 'mitigation' | 'audit'
 
 function App() {
+  const { user, loading } = useAuth()
   const [currentView, setCurrentView] = useState<View>('upload')
   const [auditData, setAuditData] = useState<any>(null)
   const [auditKey, setAuditKey] = useState(0)
@@ -42,6 +45,23 @@ function App() {
   const fairnessScore = auditData
     ? Math.round((1 - (auditData.demographicParity || 0.14)) * 100)
     : null
+
+  // While Firebase resolves auth state, show a minimal dark loader
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        height: '100vh', background: '#060a14'
+      }}>
+        <span className="login-spinner" style={{ width: 32, height: 32 }} />
+      </div>
+    )
+  }
+
+  // Not signed in — show login page
+  if (!user) {
+    return <LoginPage />
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', position: 'relative' }}>
