@@ -22,7 +22,7 @@ function getColor(score: number) {
 
 export default function ExecutiveOverview({ data, setView, onNotify }: Props) {
   const [timeframe, setTimeframe] = useState('6 Months')
-  const score = fairnessScore(data.demographicParity || 0.14)
+  const score = fairnessScore(data.demographicParity ?? 0.14)
   const dp = data.demographicParity ?? 0.14
   const di = data.disparateImpact ?? 0.7
   const eo = data.equalOpportunity ?? 0.1

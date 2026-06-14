@@ -43,7 +43,7 @@ function App() {
   }
 
   const fairnessScore = auditData
-    ? Math.round((1 - (auditData.demographicParity || 0.14)) * 100)
+    ? Math.round((1 - (auditData.demographicParity ?? 0.14)) * 100)
     : null
 
   // While Firebase resolves auth state, show a minimal dark loader

@@ -30,7 +30,7 @@ function buildStories(data: any): Story[] {
   const g2 = groups[1]?.name || 'Group B'
   const g1Rate = groups[0]?.approvalRate ?? 55
   const g2Rate = groups[1]?.approvalRate ?? 42
-  const dp = (data.demographicParity || 0.14).toFixed(3)
+  const dp = (data.demographicParity ?? 0.14).toFixed(3)
   const di = (data.disparateImpact || 0.7).toFixed(2)
   const eo = (data.equalOpportunity || 0.1).toFixed(3)
   const rows = (data.rows || 1000).toLocaleString()
@@ -271,7 +271,7 @@ export default function PersonaStories({ data, setView, onNotify }: Props) {
             {/* Mini metrics */}
             <div style={{ borderTop: '1px solid #1d2432', paddingTop: 16, marginTop: 4 }}>
               {[
-                { k: 'Demographic Parity', v: (data.demographicParity || 0.14).toFixed(3), warn: data.demographicParity > 0.1 },
+                { k: 'Demographic Parity', v: (data.demographicParity ?? 0.14).toFixed(3), warn: data.demographicParity > 0.1 },
                 { k: 'Disparate Impact', v: (data.disparateImpact || 0.7).toFixed(3), warn: data.disparateImpact < 0.8 },
                 { k: 'Equal Opportunity', v: (data.equalOpportunity || 0.1).toFixed(3), warn: data.equalOpportunity > 0.1 },
               ].map(m => (

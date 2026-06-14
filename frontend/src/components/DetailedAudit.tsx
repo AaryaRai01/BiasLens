@@ -95,10 +95,10 @@ export default function DetailedAudit({ data, onNotify }: Props) {
 
   const handlePDFExport = () => {
     const groups = data.group_data || []
-    const complianceStatus = (data.disparateImpact || 0) >= 0.8 && (data.demographicParity || 1) < 0.1 ? 'COMPLIANT' : 'ACTION REQUIRED'
-    const fairnessScore = Math.round((1 - (data.demographicParity || 0.14)) * 100)
+    const complianceStatus = (data.disparateImpact || 0) >= 0.8 && (data.demographicParity ?? 1) < 0.1 ? 'COMPLIANT' : 'ACTION REQUIRED'
+    const fairnessScore = Math.round((1 - (data.demographicParity ?? 0.14)) * 100)
     const diPass = (data.disparateImpact || 0) >= 0.8
-    const dpPass = (data.demographicParity || 1) < 0.1
+    const dpPass = (data.demographicParity ?? 1) < 0.1
 
     const html = `<!DOCTYPE html>
 <html>
@@ -186,7 +186,7 @@ export default function DetailedAudit({ data, onNotify }: Props) {
     </div>
     <div class="card">
       <div class="card-title">Demographic Parity</div>
-      <div class="card-value" style="color:${dpPass ? '#059669' : '#d97706'}">${(data.demographicParity || 0).toFixed(3)}</div>
+      <div class="card-value" style="color:${dpPass ? '#059669' : '#d97706'}">${(data.demographicParity ?? 0.14).toFixed(3)}</div>
       <div class="card-sub"><span class="${dpPass ? 'pass' : 'watch'}">${dpPass ? '✓ STABLE' : '⚠ WATCH — exceeds 10% threshold'}</span></div>
     </div>
   </div>
@@ -197,7 +197,7 @@ export default function DetailedAudit({ data, onNotify }: Props) {
     <thead><tr><th>Metric</th><th>Value</th><th>Threshold</th><th>Status</th></tr></thead>
     <tbody>
       <tr><td>Disparate Impact</td><td class="mono">${(data.disparateImpact || 0).toFixed(4)}</td><td>≥ 0.80 (4/5ths rule)</td><td class="${diPass ? 'pass' : 'fail'}">${diPass ? 'PASS' : 'FAIL'}</td></tr>
-      <tr><td>Demographic Parity</td><td class="mono">${(data.demographicParity || 0).toFixed(4)}</td><td>< 0.10</td><td class="${dpPass ? 'pass' : 'watch'}">${dpPass ? 'PASS' : 'WATCH'}</td></tr>
+      <tr><td>Demographic Parity</td><td class="mono">${(data.demographicParity ?? 0).toFixed(4)}</td><td>&lt; 0.10</td><td class="${dpPass ? 'pass' : 'watch'}">${dpPass ? 'PASS' : 'WATCH'}</td></tr>
       <tr><td>Equal Opportunity</td><td class="mono">${(data.equalOpportunity || 0).toFixed(4)}</td><td>< 0.10</td><td class="${(data.equalOpportunity || 1) < 0.1 ? 'pass' : 'watch'}">${(data.equalOpportunity || 1) < 0.1 ? 'PASS' : 'WATCH'}</td></tr>
       <tr><td>Equalized Odds</td><td class="mono">${(data.equalizedOdds || 0).toFixed(4)}</td><td>< 0.10</td><td class="${(data.equalizedOdds || 1) < 0.1 ? 'pass' : 'watch'}">${(data.equalizedOdds || 1) < 0.1 ? 'PASS' : 'WATCH'}</td></tr>
       <tr><td>False Positive Gap</td><td class="mono">0.1200</td><td>< 0.10</td><td class="watch">WATCH</td></tr>
