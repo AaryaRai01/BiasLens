@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { parseCSV, auditDataset } from '../utils/auditHelper'
 
 type Props = { onComplete: (data: any) => void }
 
@@ -23,6 +24,9 @@ export default function UploadView({ onComplete }: Props) {
         throw new Error(errData.detail || 'Upload failed')
       }
       const data = await res.json()
+      const text = await file.text()
+      const rawRows = parseCSV(text)
+      
       onComplete({
         filename: data.filename,
         rows: data.rows,
@@ -35,10 +39,21 @@ export default function UploadView({ onComplete }: Props) {
         compliance: data.compliance,
         group_data: data.group_data,
         geminiNarrative: data.narrative,
+        rawRows: rawRows,
+        predCol: data.protected_attribute_detected ? (data.columns.find((c: string) => c.toLowerCase() === 'prediction' || c.toLowerCase() === 'pred') || data.columns[data.columns.length - 2]) : data.columns[data.columns.length - 2],
+        labelCol: data.protected_attribute_detected ? (data.columns.find((c: string) => c.toLowerCase() === 'label' || c.toLowerCase() === 'target') || data.columns[data.columns.length - 1]) : data.columns[data.columns.length - 1],
       })
     } catch (e: any) {
-      setError(e.message || 'Failed to process file')
-      setIsLoading(false)
+      console.warn("Backend upload failed, falling back to client-side auditing...", e)
+      try {
+        const text = await file.text()
+        const rawRows = parseCSV(text)
+        const clientResult = auditDataset(file.name, rawRows)
+        onComplete(clientResult)
+      } catch (clientError: any) {
+        setError(clientError.message || 'Failed to process file client-side')
+        setIsLoading(false)
+      }
     }
   }
 
