@@ -22,6 +22,20 @@ export interface AuditResult {
   labelCol: string
 }
 
+// Helper to convert arbitrary values to binary 0 or 1
+function toBinary(val: any): number {
+  if (val === undefined || val === null) return 0
+  if (typeof val === 'number') {
+    if (isNaN(val)) return 0
+    return val > 0.5 ? 1 : 0
+  }
+  const str = String(val).trim().toLowerCase()
+  if (['1', 'true', 'yes', 'approve', 'approved', 'high', 'good', '>50k', 'y'].includes(str)) {
+    return 1
+  }
+  return 0
+}
+
 // Simple, robust CSV parser
 export function parseCSV(text: string): Record<string, any>[] {
   const lines = text.split(/\r?\n/).filter(line => line.trim() !== '')
@@ -93,16 +107,23 @@ export function auditDataset(filename: string, rawRows: Record<string, any>[]): 
   columns.forEach(col => {
     const lower = col.toLowerCase()
     if (lower === 'prediction' || lower === 'pred') predCol = col
-    if (lower === 'label' || lower === 'target' || lower === 'ground_truth') labelCol = col
+    if (lower === 'label' || lower === 'target' || lower === 'ground_truth' || lower === 'income' || lower === 'class') labelCol = col
   })
+
+  // If they are the same or not found, make sure they are distinct
+  if (predCol === labelCol && columns.length > 1) {
+    predCol = columns[columns.length - 2]
+  }
 
   // Group calculations
   const groupsMap: Record<string, { predSum: number; count: number; tprSum: number; label1Count: number }> = {}
 
   rawRows.forEach(row => {
-    const groupVal = String(row[protectedAttribute] ?? 'Unknown')
-    const pred = Number(row[predCol] ?? 0)
-    const label = Number(row[labelCol] ?? 0)
+    const groupVal = String(row[protectedAttribute] ?? 'Unknown').trim()
+    if (!groupVal) return
+
+    const pred = toBinary(row[predCol])
+    const label = toBinary(row[labelCol])
 
     if (!groupsMap[groupVal]) {
       groupsMap[groupVal] = { predSum: 0, count: 0, tprSum: 0, label1Count: 0 }
@@ -117,7 +138,7 @@ export function auditDataset(filename: string, rawRows: Record<string, any>[]): 
     }
   })
 
-  const groups = Object.keys(groupsMap)
+  const groups = Object.keys(groupsMap).filter(g => groupsMap[g].count > 0)
   let dp = 0.14
   let di = 0.88
   let eo = 0.12
@@ -136,6 +157,11 @@ export function auditDataset(filename: string, rawRows: Record<string, any>[]): 
     const tpr2 = groupsMap[g2].label1Count > 0 ? groupsMap[g2].tprSum / groupsMap[g2].label1Count : 0
     eo = Math.round(Math.abs(tpr1 - tpr2) * 1000) / 1000
   }
+
+  // Prevent NaNs
+  if (isNaN(dp)) dp = 0
+  if (isNaN(di)) di = 1
+  if (isNaN(eo)) eo = 0
 
   // Compliance
   const compliance = {
@@ -199,15 +225,15 @@ export function mitigateDatasetClientSide(
     const g1Rows = df.filter(r => String(r[protectedAttribute]) === g1)
     const g2Rows = df.filter(r => String(r[protectedAttribute]) === g2)
 
-    const rate1 = g1Rows.reduce((acc, r) => acc + Number(r[predCol] ?? 0), 0) / g1Rows.length
-    const rate2 = g2Rows.reduce((acc, r) => acc + Number(r[predCol] ?? 0), 0) / g2Rows.length
+    const rate1 = g1Rows.reduce((acc, r) => acc + toBinary(r[predCol]), 0) / g1Rows.length
+    const rate2 = g2Rows.reduce((acc, r) => acc + toBinary(r[predCol]), 0) / g2Rows.length
 
     const targetBoost = Math.abs(rate1 - rate2) * reweighting
 
     // Apply boost
     df.forEach(row => {
       const gVal = String(row[protectedAttribute])
-      let pred = Number(row[predCol] ?? 0)
+      let pred = toBinary(row[predCol])
 
       if (rate2 < rate1) {
         if (gVal === g2) pred += targetBoost
@@ -225,7 +251,7 @@ export function mitigateDatasetClientSide(
   df.forEach(row => {
     const groupVal = String(row[protectedAttribute] ?? 'Unknown')
     const pred = Number(row[predCol] ?? 0)
-    const label = Number(row[labelCol] ?? 0)
+    const label = toBinary(row[labelCol])
 
     if (!groupsMap[groupVal]) {
       groupsMap[groupVal] = { predSum: 0, count: 0, tprSum: 0, label1Count: 0 }
@@ -258,6 +284,11 @@ export function mitigateDatasetClientSide(
     const tpr2 = groupsMap[g2].label1Count > 0 ? groupsMap[g2].tprSum / groupsMap[g2].label1Count : 0
     eo = Math.round(Math.abs(tpr1 - tpr2) * 1000) / 1000
   }
+
+  // Prevent NaNs
+  if (isNaN(dp)) dp = 0
+  if (isNaN(di)) di = 1
+  if (isNaN(eo)) eo = 0
 
   const compliance = {
     eu_ai_act: dp < 0.1 ? 'COMPLIANT' : 'HIGH RISK',

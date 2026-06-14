@@ -19,17 +19,21 @@ export default function MitigationSandbox({ data, setAuditData, onNotify }: Prop
     { msg: 'Sandbox initialised — baseline loaded', time: 'Just now', type: 'info' },
   ])
 
-  const baseDP = data.demographicParity ?? 0.14
-  const f1Baseline = parseFloat((0.65 + Math.random() * 0.1).toFixed(2))
+  // Freeze the baseline DP and F1 score at initialization
+  const [baselineDP] = useState(data.demographicParity ?? 0.14)
+  const [f1Baseline] = useState(() => parseFloat((0.65 + Math.random() * 0.1).toFixed(2)))
+
   const f1Mitigated = mitigated ? parseFloat((f1Baseline - 0.03).toFixed(2)) : null
-  const fairnessBaseline = Math.round((1 - baseDP) * 100)
-  const fairnessMitigated = mitigated ? Math.min(fairnessBaseline + Math.round(reweighting * 30), 99) : null
+  const fairnessBaseline = Math.round((1 - baselineDP) * 100)
+  const fairnessMitigated = mitigated 
+    ? Math.min(fairnessBaseline + Math.round(reweighting * 30), 99) 
+    : null
 
   // Trade-off chart
   const tradeoffData = Array.from({ length: 8 }, (_, i) => ({
     intensity: (i * 0.15).toFixed(1),
     'Model Accuracy': parseFloat((f1Baseline - i * 0.012).toFixed(3)),
-    'Demographic Parity': parseFloat((baseDP - i * (baseDP / 8)).toFixed(3)),
+    'Demographic Parity': parseFloat((baselineDP - i * (baselineDP / 8)).toFixed(3)),
   }))
 
   const handleMitigate = async () => {
